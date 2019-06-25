@@ -66,6 +66,7 @@ def jetToolbox( proc, jetType, jetSequence, outputFile,
 	toolsUsed = []
 	mod = OrderedDict()
 	runOnData = not runOnMC
+	print "runOnData: ", runOnData
 	if runOnData:
 		GetJetMCFlavour = False
 		GetSubjetMCFlavour = False
@@ -521,6 +522,7 @@ def jetToolbox( proc, jetType, jetSequence, outputFile,
 
 			#### Creating softdrop genjets and gensubjets
 			if runOnMC:
+				print "running on MC"
 				mod["GenJetsNoNuSoftDrop"] = mod["GenJetsNoNu"]+'SoftDrop'
 				_addProcessAndTask( proc, mod["GenJetsNoNuSoftDrop"],
 						ak4GenJets.clone(
@@ -561,7 +563,9 @@ def jetToolbox( proc, jetType, jetSequence, outputFile,
 
 			##### Creating the softdrop subjet PATJetCollection
 			mod["PATSubjetsSoftDropLabel"] = mod["PATJetsSoftDropLabel"]+'Subjets'
-			addJetCollection(
+			print "Looking for GenJetsNoNuSoftDrop here"
+			if runOnMC:
+				addJetCollection(
 					proc,
 					labelName = mod["PATSubjetsSoftDropLabel"],
 					jetSource = cms.InputTag( mod["PFJetsSoftDrop"], 'SubJets'),
@@ -584,6 +588,29 @@ def jetToolbox( proc, jetType, jetSequence, outputFile,
 					groomedFatJets=cms.InputTag(mod["PFJetsSoftDrop"]), # needed for subjet flavor clustering
 					outputModules = ['outputFile']
 					)
+			else:
+                                addJetCollection(
+                                        proc,
+                                        labelName = mod["PATSubjetsSoftDropLabel"],
+                                        jetSource = cms.InputTag( mod["PFJetsSoftDrop"], 'SubJets'),
+                                        algo = jetalgo,  # needed for subjet b tagging
+                                        rParam = jetSize,  # needed for subjet b tagging
+                                        jetCorrections = subJEC if subJEC is not None else None,
+                                        pfCandidates = cms.InputTag( pfCand ),
+                                        pvSource = cms.InputTag( pvLabel),
+                                        svSource = cms.InputTag( svLabel ),
+                                        muSource = cms.InputTag( muLabel ),
+                                        elSource = cms.InputTag( elLabel ),
+                                        btagDiscriminators = subjetBTagDiscriminators,
+                                        btagInfos = bTagInfos,
+                                        getJetMCFlavour = GetSubjetMCFlavour,
+                                        genParticles = cms.InputTag(genParticlesLabel),
+                                        explicitJTA = True,  # needed for subjet b tagging
+                                        svClustering = True, # needed for subjet b tagging
+                                        fatJets=cms.InputTag(mod["PFJets"]),             # needed for subjet flavor clustering
+                                        groomedFatJets=cms.InputTag(mod["PFJetsSoftDrop"]), # needed for subjet flavor clustering
+                                        outputModules = ['outputFile']
+                                        )
 			mod["PATSubjetsSoftDrop"] = patJets+mod["PATSubjetsSoftDropLabel"]
 			mod["selPATSubjetsSoftDrop"] = selPatJets+mod["PATSubjetsSoftDropLabel"]
 
